@@ -1,0 +1,188 @@
+openapi: 3.0.3
+
+info:
+  title: Greek Gods API
+  version: 1.0.0
+  description: |
+    Publishes the catalogue of Greek gods this service holds.
+
+    Every record carries an identifier minted by this service and a name, and
+    nothing else. Identifiers appear nowhere in the third-party name source that
+    seeds the catalogue; consumers may persist them.
+
+    **Identifier permanence.** An identifier published for a god denotes that same
+    god permanently, and no two records share one. This API publishes no operation
+    that removes a record, changes a name, or changes an identifier, so no consumer
+    of this API can break that guarantee.
+
+    **Independence.** A request is answered from this service's own records alone.
+    The third-party name source takes no part in handling a request, so neither its
+    latency nor its availability can affect the outcome.
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: dvbe26-workshop-exercise-2
+    url: https://github.com/lealoureiro/dvbe26-workshop-exercise-2
+
+servers:
+  - url: /
+    description: Relative base path, resolved against the deployment host
+
+tags:
+  - name: Greek Gods
+    description: Read the Greek gods catalogue
+
+paths:
+  /api/v1/gods/greek:
+    get:
+      operationId: getGreekGods
+      tags:
+        - Greek Gods
+      summary: Retrieve the Greek gods catalogue
+      description: |
+        Returns every Greek god record the service currently holds, in a single
+        request.
+
+        **Ordering.** Records are returned in **ascending order of identifier**.
+        Because the catalogue is only ever added to, a consumer that has seen it
+        before finds earlier records in their previous positions, with later ones
+        appended. Repeating the request without the catalogue changing yields the
+        records in the same order.
+
+        **Empty catalogue.** An empty catalogue is a valid state rather than a
+        failure. When the service holds no records it responds `200` with an empty
+        array — never an error. A consumer can therefore always tell "nothing is
+        recorded" (`200` with `[]`) apart from "the request did not work" (`500`).
+
+        **Authentication.** None. This operation is public and accepts a request
+        that presents no credential.
+      security: []
+      responses:
+        "200":
+          $ref: '#/components/responses/GreekGodCatalogue'
+        "500":
+          $ref: '#/components/responses/CatalogueUnavailable'
+
+components:
+
+  schemas:
+
+    GreekGod:
+      type: object
+      description: A Greek god as this service publishes it.
+      additionalProperties: false
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: |
+            Identifier minted by this service. Stable and permanent: it always
+            denotes the same god, and is never reassigned to another.
+          example: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: |
+            The god's name, as recorded in the catalogue. Unique across the
+            catalogue, compared without regard to letter case.
+          example: Zeus
+
+    ProblemDetails:
+      type: object
+      description: |
+        RFC 7807 problem detail describing a failure on the service's own side.
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - errorId
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI identifying the problem type.
+          example: https://github.com/lealoureiro/dvbe26-workshop-exercise-2/problems/catalogue-unavailable
+        title:
+          type: string
+          description: Short, human-readable summary of the problem type.
+          example: Catalogue unavailable
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+          description: HTTP status code for this occurrence.
+          example: 500
+        detail:
+          type: string
+          description: |
+            Human-readable explanation of this occurrence. Deliberately generic:
+            the underlying cause is recorded server-side against errorId and is
+            never disclosed here.
+          example: The Greek gods catalogue could not be read.
+        instance:
+          type: string
+          format: uri-reference
+          description: URI reference identifying this occurrence.
+          example: /api/v1/gods/greek
+        errorId:
+          type: string
+          description: |
+            Correlation identifier for this occurrence. Quote it when reporting the
+            failure; the service logs the cause against it.
+          example: 77df48fa-0277-4615-a43c-1f7c950408dc
+
+  responses:
+
+    GreekGodCatalogue:
+      description: |
+        The catalogue, in ascending identifier order. An empty array is a success
+        and means the catalogue holds no records.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/GreekGod'
+          examples:
+            severalRecords:
+              summary: Catalogue holding several records
+              value:
+                - id: 1
+                  name: Zeus
+                - id: 2
+                  name: Hera
+            singleRecord:
+              summary: Catalogue holding exactly one record
+              value:
+                - id: 1
+                  name: Zeus
+            emptyCatalogue:
+              summary: Catalogue holding no records - a success, not an error
+              value: []
+
+    CatalogueUnavailable:
+      description: |
+        The service could not read its catalogue. This reports a failure of the
+        service's own, and is distinct from an empty catalogue, which succeeds.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            catalogueUnavailable:
+              summary: The catalogue could not be read
+              value:
+                type: https://github.com/lealoureiro/dvbe26-workshop-exercise-2/problems/catalogue-unavailable
+                title: Catalogue unavailable
+                status: 500
+                detail: The Greek gods catalogue could not be read.
+                instance: /api/v1/gods/greek
+                errorId: 77df48fa-0277-4615-a43c-1f7c950408dc

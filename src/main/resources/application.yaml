@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: greek-gods-api
+
+  # Developer-operated local PostgreSQL. No shared or hosted instance exists, so
+  # every value is an environment-variable placeholder with a local-only default.
+  # Never replace these defaults with a real host or a real credential.
+  datasource:
+    url: ${GREEK_GODS_DB_URL:jdbc:postgresql://localhost:5432/greek_gods}
+    username: ${GREEK_GODS_DB_USERNAME:greek_gods}
+    password: ${GREEK_GODS_DB_PASSWORD:greek_gods}
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Forward-only discipline: the schema is owned entirely by versioned migrations.
+    baseline-on-migrate: false
+    validate-on-migrate: true
+    clean-disabled: true
+
+server:
+  shutdown: graceful

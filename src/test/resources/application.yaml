@@ -1,0 +1,19 @@
+# Test configuration.
+#
+# No datasource is declared here on purpose. Integration (*IT) and acceptance
+# (*AT) tests supply a real PostgreSQL through Testcontainers, wired by
+# @ServiceConnection (design D5). An in-memory substitute is not permitted,
+# not even as a fallback, because the guarantees under test — sequence
+# behaviour and a case-insensitive unique constraint — are engine-specific.
+spring:
+  # Refuse to swap a configured DataSource for an embedded one in test slices.
+  # This is the structural guard that keeps D5 true as tests are added.
+  test:
+    database:
+      replace: none
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
