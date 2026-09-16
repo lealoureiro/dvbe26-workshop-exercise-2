@@ -1,0 +1,45 @@
+# Developer-operated PostgreSQL for running the Greek Gods API locally.
+#
+#   docker compose up -d --wait     start, and wait until it accepts connections
+#   ./mvnw spring-boot:run          the app's defaults already point here
+#   docker compose down             stop, keeping the data
+#   docker compose down -v          stop and discard the data
+#
+# Tests do NOT need this. Integration and acceptance tests start their own
+# PostgreSQL through Testcontainers, so `./mvnw clean verify` needs only Docker.
+#
+# The credentials below are local-only defaults matching the placeholders in
+# src/main/resources/application.yaml. They are not secrets and must never be
+# replaced with a real host or a real credential.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: greek-gods-db
+    environment:
+      POSTGRES_DB: greek_gods
+      POSTGRES_USER: greek_gods
+      POSTGRES_PASSWORD: greek_gods
+    ports:
+      # Host port is overridable because 5432 is often already taken. When you
+      # change it, point the app at the same port:
+      #   GREEK_GODS_DB_PORT=55432 docker compose up -d --wait
+      #   GREEK_GODS_DB_URL=jdbc:postgresql://localhost:55432/greek_gods ./mvnw spring-boot:run
+      - "${GREEK_GODS_DB_PORT:-5432}:5432"
+    volumes:
+      # Named volume, so identifiers survive a restart. That matters here: the
+      # service promises an identifier denotes the same god permanently, and a
+      # throwaway database would only ever demonstrate that within one run.
+      - greek-gods-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # `--wait` above depends on this, so `up` returns only once Flyway could
+      # actually connect.
+      test: ["CMD-SHELL", "pg_isready -U greek_gods -d greek_gods"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  greek-gods-db-data:
