@@ -17,3 +17,12 @@ spring:
     locations: classpath:db/migration
     validate-on-migrate: true
     clean-disabled: true
+
+# Reconciliation defaults to off for the whole test suite (design D9's kill
+# switch). Without this, every @SpringBootTest context would schedule a real
+# outbound call to the third-party source at start-up — flaky, slow, and
+# irrelevant to what most of these tests verify. Tests that specifically cover
+# greek-gods-upstream-sync override this property where they need it on.
+greek-gods:
+  sync:
+    enabled: false

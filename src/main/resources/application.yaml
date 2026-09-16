@@ -20,3 +20,20 @@ spring:
 
 server:
   shutdown: graceful
+
+# Reconciliation with the third-party Greek gods name source (greek-gods-upstream-sync).
+# See ReconciliationKillSwitch, GreekGodSyncProperties, and design decisions D6/D7/D9.
+greek-gods:
+  sync:
+    # The operational kill switch (design D9). Defaults to on; an unreadable or
+    # unparseable value is treated as off, so a configuration mistake can never
+    # cause an unintended call to the third party.
+    enabled: ${GREEK_GODS_SYNC_ENABLED:true}
+    # Cadence between the end of one reconciliation run and the start of the
+    # next (design D6). ISO-8601 duration; configurable to shorten it for a
+    # workshop demonstration.
+    fixed-delay: ${GREEK_GODS_SYNC_FIXED_DELAY:PT1H}
+    upstream:
+      base-url: ${GREEK_GODS_SYNC_UPSTREAM_BASE_URL:https://my-json-server.typicode.com/jabrena/latency-problems}
+      connect-timeout: ${GREEK_GODS_SYNC_UPSTREAM_CONNECT_TIMEOUT:PT2S}
+      read-timeout: ${GREEK_GODS_SYNC_UPSTREAM_READ_TIMEOUT:PT5S}
