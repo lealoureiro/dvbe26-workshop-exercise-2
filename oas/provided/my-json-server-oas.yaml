@@ -10,7 +10,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://my-json-server.typicode.com/jabrena/latency-problems
+  - url: https://raw.githubusercontent.com/jabrena/latency-rosetta-stone/refs/heads/master/java/src/test/resources/__files/greek.json
     description: External JSON server
 paths:
   /greek:
